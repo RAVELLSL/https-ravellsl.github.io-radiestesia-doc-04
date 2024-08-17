@@ -13,7 +13,7 @@
         }
         
         .container {
-            max-width: 1400px; /* Aumenta a largura máxima para 1400px */
+            max-width: 1600px; /* Aumenta a largura máxima para 1600px */
             margin: 0 auto;
             background-color: #fff;
             padding: 20px;
@@ -87,15 +87,14 @@
             border-collapse: collapse;
             margin-bottom: 20px;
             background-color: #fff;
-            table-layout: fixed; /* Garante que as colunas tenham largura fixa */
+            table-layout: auto; /* Permite que as colunas ajustem sua largura automaticamente */
         }
         
         th, td {
             padding: 12px;
             border-bottom: 1px solid #ddd;
             text-align: center;
-            word-wrap: break-word; /* Assegura que o texto se quebre dentro das células */
-            white-space: nowrap; /* Evita que o texto quebre, mantendo-o em uma linha */
+            white-space: nowrap; /* Impede que o texto se quebre em várias linhas */
         }
         
         th {
@@ -186,9 +185,7 @@
                 margin: 10px 0;
             }
         }
-        </style>
-        
-
+    </style>
 </head>
 <body>
 
