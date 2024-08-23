@@ -186,6 +186,161 @@
             }
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+    <script>
+        function getFileName(baseName, extension) {
+            const protocolNumber = document.getElementById('protocolo').value.trim();
+            const userName = document.getElementById('nome').value.trim();
+            const pageTitle = document.title.trim();
+
+            if (protocolNumber && userName && pageTitle) {
+                return `${protocolNumber}_${userName}_${pageTitle}.${extension}`;
+            } else {
+                return `${baseName}.${extension}`;
+            }
+        }
+
+        function clearAllInputs() {
+            document.querySelectorAll('input').forEach(input => {
+                input.value = '';
+                if (input.type === 'radio') {
+                    input.checked = false;
+                }
+            });
+            localStorage.clear();
+        }
+
+        function exportData() {
+            const fileName = getFileName('dados_radiestesia', 'json');
+            const data = {};
+            document.querySelectorAll('input').forEach((input) => {
+                if (input.type === 'radio') {
+                    if (input.checked) {
+                        data[input.name] = input.value;
+                    }
+                } else {
+                    data[input.id] = input.value;
+                }
+            });
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const data = JSON.parse(event.target.result);
+
+                Object.keys(data).forEach(key => {
+                    const input = document.getElementById(key);
+                    if (input) {
+                        if (input.type === 'radio') {
+                            document.querySelector(`input[name="${input.name}"][value="${data[key]}"]`).checked = true;
+                        } else {
+                            input.value = data[key];
+                        }
+                    }
+                });
+            };
+            reader.readAsText(file);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return ""; // Se não for uma data válida, retornar vazio
+
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+
+            return `${day}/${month}/${year}`;
+        }
+
+        function generatePDF() {
+            const fileName = getFileName('relatorio_radiestesia', 'pdf');
+
+            // Formatando as datas antes de gerar o PDF
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                const formattedDate = formatDate(input.value);
+                input.setAttribute('data-formatted-value', formattedDate);
+            });
+
+            const element = document.querySelector(".container");
+            const opt = {
+                margin: 0.5,
+                filename: fileName,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            // Substituir os campos de data pelo valor formatado
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                const parent = input.parentNode;
+                const span = document.createElement('span');
+                span.textContent = input.getAttribute('data-formatted-value');
+                parent.replaceChild(span, input);
+            });
+
+            html2pdf().from(element).set(opt).save().then(() => {
+                // Restaurar os campos de data após a geração do PDF
+                document.querySelectorAll('span').forEach(span => {
+                    const parent = span.parentNode;
+                    const input = document.createElement('input');
+                    input.type = 'date';
+                    input.value = formatDateBack(span.textContent);
+                    parent.replaceChild(input, span);
+                });
+            });
+        }
+
+        function formatDateBack(dateString) {
+            const [day, month, year] = dateString.split('/');
+            if (!day || !month || !year) return "";
+
+            const formattedDate = `${year}-${month}-${day}`;
+            return formattedDate;
+        }
+
+        function formatPercent(input) {
+            let value = input.value.replace('%', '').trim();
+            if (value !== '') {
+                value = parseFloat(value);
+                if (!isNaN(value)) {
+                    input.value = value + '%';
+                }
+            }
+        }
+
+        function onPercentualInput(input) {
+            let value = input.value.replace('%', '').trim();
+            if (!isNaN(value) && value !== '') {
+                input.value = value + '%';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.percent-input').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    onPercentualInput(input);
+                });
+
+                input.addEventListener('blur', function () {
+                    formatPercent(input);
+                });
+            });
+        });
+    </script>
 </head>
 <body>
 
